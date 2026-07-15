@@ -36,7 +36,7 @@ if [[ "$version" =~ ^1\.(1[0-9]|[2-9])\. ]] || [[ "$version" =~ ^[2-9]\. ]]; the
         if [[ -z "$details" ]]; then
           details="${jail}: ${ip_match}"
         else
-          details="${details}\\n${jail}: ${ip_match}"
+          details="${details}\\n\\n${jail}: ${ip_match}"
         fi
       fi
     fi
@@ -63,7 +63,7 @@ else
       if [[ -z "$details" ]]; then
         details="${jail}: ${ip_match}"
       else
-        details="${details}\\n${jail}: ${ip_match}"
+        details="${details}\\n\\n${jail}: ${ip_match}"
       fi
     fi
   done
