@@ -14,6 +14,7 @@ Collection of CheckMK monitoring plugins for Linux servers. Tested only on Debia
 | `qemu.sh` | local check | Monitor QEMU/KVM virtual machines (state, memory, CPU) |
 | `virsh-backup.sh` | local check | Check VM backup status and list backup data files |
 | `nut.sh` | agent plugin | Dump UPS status via NUT (section `<<<nut>>>`) |
+| `mk_mysql` | agent plugin | MySQL/MariaDB monitoring — ping, global status/variables (sections `<<<mysql_ping>>>`, `<<<mysql>>>`). Based on original Checkmk plugin with capacity and replica sections removed |
 
 ## Installation
 
@@ -33,6 +34,7 @@ sudo wget https://raw.githubusercontent.com/rollopack/checkmk-plugin/main/virsh-
 
 ```bash
 sudo wget https://raw.githubusercontent.com/rollopack/checkmk-plugin/main/nut.sh -O /usr/lib/check_mk_agent/plugins/nut.sh && sudo chmod 755 /usr/lib/check_mk_agent/plugins/nut.sh
+sudo wget https://raw.githubusercontent.com/rollopack/checkmk-plugin/main/mk_mysql -O /usr/lib/check_mk_agent/plugins/mk_mysql && sudo chmod 755 /usr/lib/check_mk_agent/plugins/mk_mysql
 ```
 
 ## Additional setup
