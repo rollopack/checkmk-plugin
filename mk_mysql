@@ -1,0 +1,102 @@
+#!/bin/bash
+# Copyright (C) 2019 Checkmk GmbH - License: GNU General Public License v2
+# This file is part of Checkmk (https://checkmk.com). It is subject to the terms and
+# conditions defined in the file COPYING, which is part of this source code package.
+#
+# NOTE: This file is based on the original Checkmk mk_mysql plugin but has the
+# following parts removed (commented out):
+#   - mysql_capacity section (table_schema capacity query)
+#   - mysql_replica_slave headers and STATUS_COMMAND variable assignment
+#     (the STATUS_COMMAND query at line 47-48 still executes but the variable
+#      is never assigned, so it runs an empty command)
+
+# Reason for this no-op: shellcheck disable=... before the first command disables the error for the
+# entire script.
+:
+
+# Disable unused variable error (needed to keep track of version)
+# shellcheck disable=SC2034
+CMK_VERSION="2.5.0p8"
+
+# gets optional socket as argument
+do_query() {
+    # workaround because in some cases /root/.my.cnf or /root/.mylogin.cnf are still considered despite the
+    # --defaults-file option (SUP-10993)
+    HOME=/dev/null
+
+    # we use the sockets full name as instance name:
+    INSTANCE_HEADER="[[$2]]"
+
+    # Check if mysqld is running and root password setup
+    echo "<<<mysql_ping>>>"
+    echo "$INSTANCE_HEADER"
+    $MYSQLADMIN --defaults-file="$MK_CONFDIR"/mysql.cfg ${1:+--socket="$1"} ping 2>&1 || return
+
+    echo "<<<mysql>>>"
+    echo "$INSTANCE_HEADER"
+    $MYSQL --defaults-file="$MK_CONFDIR"/mysql.cfg ${1:+--socket="$1"} -sN \
+        -e "show global status ; show global variables ;"
+
+#    echo "<<<mysql_capacity>>>"
+#    echo "$INSTANCE_HEADER"
+#    $MYSQL --defaults-file="$MK_CONFDIR"/mysql.cfg ${1:+--socket="$1"} -sN \
+#        -e "SELECT table_schema, sum(data_length + index_length), sum(data_free)
+#            FROM information_schema.TABLES GROUP BY table_schema"
+
+    MYSQL_VERSION=$($MYSQL --defaults-file="$MK_CONFDIR"/mysql.cfg ${1:+--socket="$1"} -s -e "SELECT VERSION();" | grep -o '^[0-9]\+')
+#    echo "<<<mysql_replica_slave>>>"
+#    echo "$INSTANCE_HEADER"
+#    if [ "$MYSQL_VERSION" -ge 8 ]; then
+#        STATUS_COMMAND="show replica status\G"
+#    else
+#        STATUS_COMMAND="show slave status\G"
+#    fi
+    $MYSQL --defaults-file="$MK_CONFDIR"/mysql.cfg ${1:+--socket="$1"} -s \
+        -e "$STATUS_COMMAND"
+
+}
+
+# The following logic exists as well in the windows vbs script mk_mysql
+if [ ! -f "${MK_CONFDIR}/mysql.local.cfg" ]; then
+    cat <<EOF >"${MK_CONFDIR}/mysql.local.cfg"
+# This file is created because some versions of mysqladmin
+# issue a warning if there are missing includes.
+EOF
+fi
+
+if type mariadb-admin &>/dev/null; then
+    MYSQL=mariadb
+    MYSQLADMIN=mariadb-admin
+elif type mysqladmin &>/dev/null; then
+    MYSQL=mysql
+    MYSQLADMIN=mysqladmin
+else
+    exit 0
+fi
+
+mysql_socket_string=$(grep -F -h socket "$MK_CONFDIR"/mysql{.local,}.cfg | sed -ne 's/.*socket=\([^ ]*\).*/\1/p')
+alias_string=$(grep -F -h alias "$MK_CONFDIR"/mysql{.local,}.cfg | sed -ne 's/.*aliases=\([^ ]*\).*/\1/p')
+
+if [ -z "$mysql_socket_string" ]; then
+    mysql_socket_string=$(ps -fww -C mysqld | grep "socket" | sed -ne 's/.*socket=\([^ ]*\).*/\1/p')
+fi
+if [ -z "$mysql_socket_string" ]; then
+    do_query "" ""
+else
+    IFS=" " mapfile -t mysql_sockets <<<"$mysql_socket_string"
+    IFS="," read -r -a aliases <<<"$alias_string"
+
+    for i in "${!mysql_sockets[@]}"; do
+        socket="${mysql_sockets[i]}"
+        alias="${aliases[i]}"
+        if [ -z "$alias" ]; then
+            do_query "$socket" "$socket"
+        else
+            do_query "$socket" "$alias"
+        fi
+    done
+fi
+
+# In async execution the cache file would be removed if the plugin exits with non-zero exit code.
+# Avoid this from happening, just because the last mysql command failed (due to missing permissions).
+exit 0
