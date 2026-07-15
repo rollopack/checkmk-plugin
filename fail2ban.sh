@@ -1,4 +1,9 @@
 #!/bin/bash
+# Description: Monitor fail2ban status — returns CRITICAL if fail2ban is stopped,
+#              otherwise reports total currently banned IPs and per-jail banned IP list.
+# Type: local check
+# Output: <code> "Fail2ban" - Currently banned: <total> \n <jail>: <IP1> <IP2> ...
+# Codes: 0 = OK, 2 = CRITICAL (fail2ban not running)
 
 version=$(fail2ban-client -V 2>/dev/null)
 

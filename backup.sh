@@ -1,6 +1,10 @@
 #!/bin/bash
+# Description: Check backup freshness by inspecting logrotate status files on NAS mount
+# Type: local check
+# Output: <code> "Backup" - <date><age> \n <detail>
+# Codes: 0 = fresh (<=1d), 1 = warning (<=7d), 2 = stale (>7d)
 
-risultato=""
+result=""
 code=2
 
 check_path() {
@@ -43,7 +47,7 @@ check_path() {
       else                              summary_age=" ($(( age_days / 30 ))m)"
       fi
 
-      risultato="${formatted_date}${summary_age}\\n${detail}"
+      result="${formatted_date}${summary_age}\\n${detail}"
       return 0
     fi
   fi
@@ -54,8 +58,8 @@ for path in "/media/nas" "/mnt/nas"; do
   check_path "$path" && break
 done
 
-if [[ -n "$risultato" ]]; then
-  echo "$code \"Backup\" - $risultato"
+if [[ -n "$result" ]]; then
+  echo "$code \"Backup\" - $result"
 else
-  echo "2 \"Backup\" - File non trovato"
+  echo "2 \"Backup\" - Backup directory not found"
 fi
