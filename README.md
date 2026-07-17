@@ -55,3 +55,10 @@ After installing the plugins, run service discovery on the CheckMK server:
 cmk -I --all
 cmk -R
 ```
+
+
+## License
+
+GNU General Public License v3.0
+
+Copyright (C) 2026 Rolland Gabriel (https://github.com/rollopack)
