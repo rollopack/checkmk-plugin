@@ -10,9 +10,9 @@ Collection of CheckMK monitoring plugins for Linux servers. Tested only on Debia
 | `imap.sh` | local check | Check IMAP service availability via telnet |
 | `debian.sh` | local check | Check Debian version age and last dist-upgrade date |
 | `samba.sh` | local check | Count connected Samba clients and open files |
-| `backup.sh` | local check | Check backup freshness via logrotate status files on NAS |
+| `backup.sh` | local check | Check backup freshness via logrotate status files on NAS (hourly cache) |
 | `qemu.sh` | local check | Monitor QEMU/KVM virtual machines (state, memory, CPU) |
-| `virsh-backup.sh` | local check | Check VM backup status and list backup data files |
+| `virsh-backup.sh` | local check | Check VM backup status and list backup data files (hourly cache) |
 | `nut.sh` | agent plugin | Dump UPS status via NUT (section `<<<nut>>>`) |
 | `mk_mysql` | agent plugin | MySQL/MariaDB monitoring — ping, global status/variables (sections `<<<mysql_ping>>>`, `<<<mysql>>>`). Based on original Checkmk plugin with capacity and replica sections removed |
 
@@ -21,14 +21,19 @@ Collection of CheckMK monitoring plugins for Linux servers. Tested only on Debia
 ### Local checks
 
 ```bash
+sudo mkdir -p /usr/lib/check_mk_agent/local /usr/lib/check_mk_agent/local/3600
 sudo wget https://raw.githubusercontent.com/rollopack/checkmk-plugin/main/fail2ban.sh -O /usr/lib/check_mk_agent/local/fail2ban.sh && sudo chmod 755 /usr/lib/check_mk_agent/local/fail2ban.sh
 sudo wget https://raw.githubusercontent.com/rollopack/checkmk-plugin/main/imap.sh -O /usr/lib/check_mk_agent/local/imap.sh && sudo chmod 755 /usr/lib/check_mk_agent/local/imap.sh
 sudo wget https://raw.githubusercontent.com/rollopack/checkmk-plugin/main/debian.sh -O /usr/lib/check_mk_agent/local/debian.sh && sudo chmod 755 /usr/lib/check_mk_agent/local/debian.sh
 sudo wget https://raw.githubusercontent.com/rollopack/checkmk-plugin/main/samba.sh -O /usr/lib/check_mk_agent/local/samba.sh && sudo chmod 755 /usr/lib/check_mk_agent/local/samba.sh
-sudo wget https://raw.githubusercontent.com/rollopack/checkmk-plugin/main/backup.sh -O /usr/lib/check_mk_agent/local/backup.sh && sudo chmod 755 /usr/lib/check_mk_agent/local/backup.sh
+sudo wget https://raw.githubusercontent.com/rollopack/checkmk-plugin/main/backup.sh -O /usr/lib/check_mk_agent/local/3600/backup.sh && sudo chmod 755 /usr/lib/check_mk_agent/local/3600/backup.sh
 sudo wget https://raw.githubusercontent.com/rollopack/checkmk-plugin/main/qemu.sh -O /usr/lib/check_mk_agent/local/qemu.sh && sudo chmod 755 /usr/lib/check_mk_agent/local/qemu.sh
-sudo wget https://raw.githubusercontent.com/rollopack/checkmk-plugin/main/virsh-backup.sh -O /usr/lib/check_mk_agent/local/virsh-backup.sh && sudo chmod 755 /usr/lib/check_mk_agent/local/virsh-backup.sh
+sudo wget https://raw.githubusercontent.com/rollopack/checkmk-plugin/main/virsh-backup.sh -O /usr/lib/check_mk_agent/local/3600/virsh-backup.sh && sudo chmod 755 /usr/lib/check_mk_agent/local/3600/virsh-backup.sh
 ```
+
+The `3600` subdirectory caches both backup checks for one hour. If either script
+is already installed directly in `local/`, move it to `local/3600/` rather than
+keeping both copies, to avoid running the same check twice.
 
 ### Agent plugins
 
